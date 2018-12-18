@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 
 <head>
@@ -7,7 +8,6 @@
 <body>
     <canvas id="robot-canvas" width="800" height="600">
     </canvas>
-    <script src="app.js"></script>
 
     <table>
         <tr>
@@ -16,24 +16,27 @@
             <th>Cartesian Coordinate</th>
         </tr>
         <tr>
-            <td>l1: <input type="text"></td>
-            <td>t1: <input type="text"></td>
-            <td>x: <input type="text"></td>
+            <td>l1: <input type="text" id="l1"></td>
+            <td>t1: <input type="text" id="t1"></td>
+            <td>x: <input type="text" id="x"></td>
         </tr>
         <tr>
-            <td>l2: <input type="text"></td>
-            <td>t2: <input type="text"></td>
-            <td>y: <input type="text"></td>
+            <td>l2: <input type="text" id="l2"></td>
+            <td>t2: <input type="text" id="t2"></td>
+            <td>y: <input type="text" id="y"></td>
         </tr>
         <tr>
-            <td>l3: <input type="text"></td>
-            <td>t3: <input type="text"></td>
-            <td>z: <input type="text"></td>
+            <td>l3: <input type="text" id="l3"></td>
+            <td>t3: <input type="text" id="t3"></td>
+            <td>z: <input type="text" id="z"></td>
         </tr>
     </table>
-    <button id="fwk">Forward Kinematic</button>
-    <button id="bwk">Backward Kinematic</button>
-    <button id="rst">Reset</button>
+
+    <button id="fwkBtn">Forward Kinematic</button>
+    <button id="bwkBtn">Backward Kinematic</button>
+    <button id="rstBtn">Reset</button>
+
+    <script src="app.js"></script>
 
 </body>
 
