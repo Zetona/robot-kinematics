@@ -1,0 +1,40 @@
+<html>
+
+<head>
+    <title>Articulated Robot</title>
+</head>
+
+<body>
+    <canvas id="robot-canvas" width="800" height="600">
+    </canvas>
+    <script src="app.js"></script>
+
+    <table>
+        <tr>
+            <th>Link Length</th>
+            <th>Joint Angle</th>
+            <th>Cartesian Coordinate</th>
+        </tr>
+        <tr>
+            <td>l1: <input type="text"></td>
+            <td>t1: <input type="text"></td>
+            <td>x: <input type="text"></td>
+        </tr>
+        <tr>
+            <td>l2: <input type="text"></td>
+            <td>t2: <input type="text"></td>
+            <td>y: <input type="text"></td>
+        </tr>
+        <tr>
+            <td>l3: <input type="text"></td>
+            <td>t3: <input type="text"></td>
+            <td>z: <input type="text"></td>
+        </tr>
+    </table>
+    <button id="fwk">Forward Kinematic</button>
+    <button id="bwk">Backward Kinematic</button>
+    <button id="rst">Reset</button>
+
+</body>
+
+</html>
