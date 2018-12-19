@@ -29,10 +29,89 @@ function getInputValues() {
     return inputValues;
 }
 
+// Converts from degrees to radians.
+Math.radians = function (degrees) {
+    return degrees * Math.PI / 180;
+};
+
+// Round Array
+function roundArray(A) {
+    result = Array.from(A, x => x.toFixed(3));
+}
+// Converts from radians to degrees.
+Math.degrees = function (radians) {
+    return radians * 180 / Math.PI;
+};
+
+function mAdd(A, B) {
+    // create Float32Array from input
+    A = Float32Array.from(A);
+    B = Float32Array.from(B);
+    var result = weblas.saxpy(3, 1, A, B);
+    result = Array.from(result);
+    return result;
+}
+
+function mMul(A, B) {
+    // create Float32Array from input
+    A = Float32Array.from(A);
+    B = Float32Array.from(B);
+
+    // define matrix dimension
+    var height_A = 3, width_A = A.length / 3,
+        height_B = 3, width_B = B.length / 3;
+
+    var M = height_A,
+        N = width_B,
+        K = height_B;
+
+    var alpha = 1.0;
+    var beta = 0.0;
+    var C = new Float32Array(width_B)
+
+    var result = weblas.sgemm(M, N, K, alpha, A, B, beta, C);
+    // convert to float array
+    result = Array.from(result);
+    return result;
+}
+
+function calcBaseTM(t1, t2, t3) {
+    // convert degree input to radian
+    var t1 = Math.radians(t1);
+    var t2 = Math.radians(t2);
+    var t3 = Math.radians(t3);
+
+    // calculate local transformation matrix
+    var C1 = [Math.cos(t1), -Math.sin(t1), 0, Math.sin(t1), Math.cos(t1), 0, 0, 0, 1]
+    var C2 = [Math.cos(t2), 0, Math.sin(t2), 0, 1, 0, -Math.sin(t2), 0, Math.cos(t2)]
+    var C3 = [Math.cos(t3), 0, Math.sin(t3), 0, 1, 0, -Math.sin(t3), 0, Math.cos(t3)]
+
+    //calculate base transformation matrix
+    var baseC1 = C1;
+    var baseC2 = mMul(C1, C2);
+    var baseC3 = mMul(baseC2, C3);
+    return [baseC1, baseC2, baseC3];
+}
+
+function calcLinkM(l1, l2, l3) {
+    var LM1 = [0, 0, l1];
+    var LM2 = [l2, 0, 0];
+    var LM3 = [l3, 0, 0];
+    return [LM1, LM2, LM3];
+}
+
 function forwardKinematic() {
     // get variables
     var input = getInputValues();
-    console.log(input);
+
+    // calculate link matrices & transformation matrices
+    linkM = calcLinkM(input.l1, input.l2, input.l3);
+    baseTM = calcBaseTM(input.t1, input.t2, input.t3);
+
+    // calculate each link's end tip position
+    link1p = mMul(baseTM[0], linkM[0]);
+    link2p = mAdd(mMul(baseTM[1], linkM[1]), link1p);
+    link3p = mAdd(mMul(baseTM[2], linkM[2]), link2p);
 }
 
 function backwardKinematic() {
