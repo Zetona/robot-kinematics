@@ -1,3 +1,5 @@
+// === form input & matrix calculation ===
+
 // Add event listener to buttons
 document.getElementById("fwkBtn").addEventListener("click", forwardKinematic);
 document.getElementById("bwkBtn").addEventListener("click", backwardKinematic);
@@ -140,7 +142,7 @@ function forwardKinematic(event, renderOnly = false) {
         setInputValues(input);
     }
 
-    //TODO: render
+    // TODO: render
 
 }
 
@@ -163,3 +165,77 @@ function reset() {
     var input = getInputValues();
     console.log(input);
 }
+
+
+
+// === render canvas ===
+
+// scene, camera, renderer
+var scene = new THREE.Scene();
+var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.z = 20;
+var renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// update renderer and camera when browser is resized
+window.addEventListener("resize", function () {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+})
+
+// enable mouse camera control
+var controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+// plane
+var geometry = new THREE.PlaneGeometry(50, 50, 50, 50);
+var material = new THREE.MeshBasicMaterial({ color: 0x555555, wireframe: true });
+var plane = new THREE.Mesh(geometry, material);
+plane.rotation.x = Math.PI / 2;
+scene.add(plane);
+
+// create new box geometry
+var geometry = new THREE.BoxGeometry(1, 5, 1);
+var material1 = new THREE.MeshBasicMaterial({ color: 0xffff00, wireframe: true });
+var material2 = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true });
+var material3 = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+var cube1 = new THREE.Mesh(geometry, material1);
+var cube2 = new THREE.Mesh(geometry, material2);
+var cube3 = new THREE.Mesh(geometry, material3);
+
+var geometry = new THREE.SphereGeometry(0.5, 10, 10);
+var material = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+var pivot1 = new THREE.Mesh(geometry, material);
+var pivot2 = new THREE.Mesh(geometry, material);
+var pivot3 = new THREE.Mesh(geometry, material);
+pivot1.add(cube1);
+pivot2.add(cube2);
+pivot3.add(cube3);
+
+scene.add(pivot1);
+scene.add(pivot2);
+scene.add(pivot3);
+
+cube1.translateY(2.5);
+cube2.translateY(2.5);
+pivot2.translateY(5);
+pivot2.rotation.z = -Math.PI / 2;
+cube3.translateY(2.5);
+pivot3.translateY(5);
+pivot3.translateX(5);
+pivot3.rotation.z = -Math.PI / 2;
+
+var update = function () {
+}
+
+var render = function () {
+    renderer.render(scene, camera);
+};
+
+var gl_main = function () {
+    requestAnimationFrame(gl_main);
+    update();
+    render();
+}
+gl_main();
