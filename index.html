@@ -3,39 +3,65 @@
 
 <head>
     <title>Articulated Robot</title>
+    <meta charset="UTF-8"> 
 </head>
 
 <body>
     <canvas id="robot-canvas" width="800" height="600">
     </canvas>
+    <div style="display:flex">
 
-    <table>
-        <tr>
-            <th>Link Length</th>
-            <th>Joint Angle</th>
-            <th>Cartesian Coordinate</th>
-        </tr>
-        <tr>
-            <td>l1: <input type="text" id="l1"></td>
-            <td>t1: <input type="text" id="t1"></td>
-            <td>x: <input type="text" id="x"></td>
-        </tr>
-        <tr>
-            <td>l2: <input type="text" id="l2"></td>
-            <td>t2: <input type="text" id="t2"></td>
-            <td>y: <input type="text" id="y"></td>
-        </tr>
-        <tr>
-            <td>l3: <input type="text" id="l3"></td>
-            <td>t3: <input type="text" id="t3"></td>
-            <td>z: <input type="text" id="z"></td>
-        </tr>
-    </table>
+        <div style="width: 500px;">
+            <table>
+                <tr>
+                    <th colspan="3">
+                        Input
+                    </th>
+                </tr>
+                <tr>
+                    <th>Link Length</th>
+                    <th>Joint Angle</th>
+                    <th>Cartesian Coordinate</th>
+                </tr>
+                <tr>
+                    <td>l1: <input type="text" id="l1"></td>
+                    <td>t1: <input type="text" id="t1"></td>
+                    <td>x: <input type="text" id="x"></td>
+                </tr>
+                <tr>
+                    <td>l2: <input type="text" id="l2"></td>
+                    <td>t2: <input type="text" id="t2"></td>
+                    <td>y: <input type="text" id="y"></td>
+                </tr>
+                <tr>
+                    <td>l3: <input type="text" id="l3"></td>
+                    <td>t3: <input type="text" id="t3"></td>
+                    <td>z: <input type="text" id="z"></td>
+                </tr>
+            </table>
 
-    <button id="fwkBtn">Forward Kinematic</button>
-    <button id="bwkBtn">Backward Kinematic</button>
-    <button id="rstBtn">Reset</button>
+            <button id="fwkBtn">Forward Kinematic</button>
+            <button id="bwkBtn">Backward Kinematic</button>
+            <button id="rstBtn">Reset</button>
+        </div>
 
+        <div style="flex-grow:1">
+            <table>
+                <tr>
+                    <th colspan="3">
+                        Calculation
+                    </th>
+                </tr>
+                <tr>
+                    <th>Link Vector</th>
+                    <th>Local Transformation Matrix</th>
+                    <th>Base Transformation Matrix</th>
+                </tr>
+
+            </table>
+        </div>
+
+    </div>
     <script src="weblas.js"></script>
     <script src="app.js"></script>
 

@@ -29,15 +29,33 @@ function getInputValues() {
     return inputValues;
 }
 
+function setInputValues(inputValues) {
+    input_l1.value = inputValues.l1;
+    input_l2.value = inputValues.l2;
+    input_l3.value = inputValues.l3;
+    input_t1.value = inputValues.t1;
+    input_t2.value = inputValues.t2;
+    input_t3.value = inputValues.t3;
+    input_x.value = inputValues.x;
+    input_y.value = inputValues.y;
+    input_z.value = inputValues.z;
+}
+
 // Converts from degrees to radians.
 Math.radians = function (degrees) {
     return degrees * Math.PI / 180;
 };
 
-// Round Array
-function roundArray(A) {
-    result = Array.from(A, x => x.toFixed(3));
+// Round number
+function round(num, places = 10) {
+    return +(Math.round(num + "e+" + places) + "e-" + places) || 0;
 }
+
+// Round array
+function roundArray(A) {
+    return Array.from(A, x => round(x));
+}
+
 // Converts from radians to degrees.
 Math.degrees = function (radians) {
     return radians * 180 / Math.PI;
@@ -100,7 +118,7 @@ function calcLinkM(l1, l2, l3) {
     return [LM1, LM2, LM3];
 }
 
-function forwardKinematic() {
+function forwardKinematic(event, renderOnly = false) {
     // get variables
     var input = getInputValues();
 
@@ -109,15 +127,35 @@ function forwardKinematic() {
     baseTM = calcBaseTM(input.t1, input.t2, input.t3);
 
     // calculate each link's end tip position
-    link1p = mMul(baseTM[0], linkM[0]);
-    link2p = mAdd(mMul(baseTM[1], linkM[1]), link1p);
-    link3p = mAdd(mMul(baseTM[2], linkM[2]), link2p);
+    var link1p = mMul(baseTM[0], linkM[0]);
+    var link2p = mAdd(mMul(baseTM[1], linkM[1]), link1p);
+    var link3p = mAdd(mMul(baseTM[2], linkM[2]), link2p);
+
+    // show coordinate to user
+    if (!renderOnly) {
+        var coord = roundArray(link3p);
+        input.x = coord[0];
+        input.y = coord[1];
+        input.z = coord[2];
+        setInputValues(input);
+    }
+
+    //TODO: render
+
 }
 
 function backwardKinematic() {
     // get variables
     var input = getInputValues();
     console.log(input);
+
+    // TODO: calculate ln and tn
+
+    // TODO: show values to user
+
+    // use forward kinematic function to calculate 
+    // transformation matrices and render the robot
+    forwardKinematic(true);
 }
 
 function reset() {
