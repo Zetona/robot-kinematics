@@ -100,9 +100,9 @@ function calcBaseTM(t1, t2, t3) {
     var t3 = Math.radians(t3);
 
     // calculate local transformation matrix
-    var C1 = [Math.cos(t1), -Math.sin(t1), 0, Math.sin(t1), Math.cos(t1), 0, 0, 0, 1]
-    var C2 = [Math.cos(t2), 0, Math.sin(t2), 0, 1, 0, -Math.sin(t2), 0, Math.cos(t2)]
-    var C3 = [Math.cos(t3), 0, Math.sin(t3), 0, 1, 0, -Math.sin(t3), 0, Math.cos(t3)]
+    var C1 = [Math.cos(t1), 0, Math.sin(t1), 0, 1, 0, -Math.sin(t1), 0, Math.cos(t1)]
+    var C2 = [Math.cos(t2), -Math.sin(t2), 0, Math.sin(t2), Math.cos(t2), 0, 0, 0, 1]
+    var C3 = [Math.cos(t3), -Math.sin(t3), 0, Math.sin(t3), Math.cos(t3), 0, 0, 0, 1]
 
     //calculate base transformation matrix
     var baseC1 = C1;
@@ -112,7 +112,7 @@ function calcBaseTM(t1, t2, t3) {
 }
 
 function calcLinkM(l1, l2, l3) {
-    var LM1 = [0, 0, l1];
+    var LM1 = [0, l1, 0];
     var LM2 = [l2, 0, 0];
     var LM3 = [l3, 0, 0];
     return [LM1, LM2, LM3];
