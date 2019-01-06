@@ -5,6 +5,8 @@ document.getElementById("fwkBtn").addEventListener("click", forwardKinematic);
 document.getElementById("bwkBtn").addEventListener("click", backwardKinematic);
 document.getElementById("rstBtn").addEventListener("click", reset);
 
+
+
 // Field elements
 input_l1 = document.getElementById("l1");
 input_l2 = document.getElementById("l2");
@@ -15,6 +17,25 @@ input_t3 = document.getElementById("t3");
 input_x = document.getElementById("x");
 input_y = document.getElementById("y");
 input_z = document.getElementById("z");
+
+// Sliders 
+slider_t1 = document.getElementById("t1Slider");
+slider_t2 = document.getElementById("t2Slider");
+slider_t3 = document.getElementById("t3Slider");
+
+// Add event listener to sliders
+slider_t1.oninput = function () {
+    input_t1.value = this.value;
+    forwardKinematic();
+}
+slider_t2.oninput = function () {
+    input_t2.value = this.value;
+    forwardKinematic();
+}
+slider_t3.oninput = function () {
+    input_t3.value = this.value;
+    forwardKinematic();
+}
 
 function getInputValues() {
     var inputValues = {
@@ -62,6 +83,19 @@ function roundArray(A) {
 Math.degrees = function (radians) {
     return radians * 180 / Math.PI;
 };
+
+// Convert transformation matrix to euler angle
+function toEuler(TM) {
+    console.log(TM);
+    var alpha = 0;
+    var beta = 0;
+    var gamma = 0;
+    var alpha = Math.atan2(TM[7], TM[8]);
+    var beta = Math.atan2(-TM[6], Math.sqrt(Math.pow(TM[7], 2) + Math.pow(TM[8], 2)));
+    var gamma = Math.atan2(TM[3], TM[0]);
+    var euler = [alpha, beta, gamma];
+    return euler;
+}
 
 function mAdd(A, B) {
     // create Float32Array from input
@@ -121,17 +155,20 @@ function calcLinkM(l1, l2, l3) {
 }
 
 function forwardKinematic(event, renderOnly = false) {
-    // get variables
+    // get user input
     var input = getInputValues();
 
-    // calculate link matrices & transformation matrices
+    // calculate local link matrices
     linkM = calcLinkM(input.l1, input.l2, input.l3);
+
+    // calculate base transformation matrices
     baseTM = calcBaseTM(input.t1, input.t2, input.t3);
 
-    // calculate each link's end tip position
+    // calculate each link's base end tip position
     var link1p = mMul(baseTM[0], linkM[0]);
     var link2p = mAdd(mMul(baseTM[1], linkM[1]), link1p);
     var link3p = mAdd(mMul(baseTM[2], linkM[2]), link2p);
+    var linkP = [link1p, link2p, link3p];
 
     // show coordinate to user
     if (!renderOnly) {
@@ -142,12 +179,14 @@ function forwardKinematic(event, renderOnly = false) {
         setInputValues(input);
     }
 
-    // TODO: render
+    // TODO: show calculation result
 
+    // update scene
+    update(linkM, baseTM, linkP);
 }
 
 function backwardKinematic() {
-    // get variables
+    // get user input
     var input = getInputValues();
     console.log(input);
 
@@ -188,45 +227,106 @@ window.addEventListener("resize", function () {
 // enable mouse camera control
 var controls = new THREE.OrbitControls(camera, renderer.domElement);
 
-// plane
-var geometry = new THREE.PlaneGeometry(50, 50, 50, 50);
-var material = new THREE.MeshBasicMaterial({ color: 0x555555, wireframe: true });
-var plane = new THREE.Mesh(geometry, material);
+// create plane geometry
+var planeGeometry = new THREE.PlaneGeometry(50, 50, 50, 50);
+var planeMaterial = new THREE.MeshBasicMaterial({ color: 0x555555, wireframe: true });
+var plane = new THREE.Mesh(planeGeometry, planeMaterial);
 plane.rotation.x = Math.PI / 2;
 scene.add(plane);
 
-// create new box geometry
-var geometry = new THREE.BoxGeometry(1, 5, 1);
+// create robot geometry
 var material1 = new THREE.MeshBasicMaterial({ color: 0xffff00, wireframe: true });
 var material2 = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true });
 var material3 = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
-var cube1 = new THREE.Mesh(geometry, material1);
-var cube2 = new THREE.Mesh(geometry, material2);
-var cube3 = new THREE.Mesh(geometry, material3);
 
-var geometry = new THREE.SphereGeometry(0.5, 10, 10);
-var material = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
-var pivot1 = new THREE.Mesh(geometry, material);
-var pivot2 = new THREE.Mesh(geometry, material);
-var pivot3 = new THREE.Mesh(geometry, material);
-pivot1.add(cube1);
-pivot2.add(cube2);
-pivot3.add(cube3);
+var sphereGeometry = new THREE.SphereGeometry(0.5, 10, 10);
+var material4 = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
 
-scene.add(pivot1);
-scene.add(pivot2);
-scene.add(pivot3);
+var meshesArray = [];
 
-cube1.translateY(2.5);
-cube2.translateY(2.5);
-pivot2.translateY(5);
-pivot2.rotation.z = -Math.PI / 2;
-cube3.translateY(2.5);
-pivot3.translateY(5);
-pivot3.translateX(5);
-pivot3.rotation.z = -Math.PI / 2;
+var defaultPosition = function () {
+    // reset all geometries position to default
+    meshesArray.forEach(function (mesh) {
+        mesh.position.set(0, 0, 0);
+        mesh.rotation.set(0, 0, 0);
+    });
+}
 
-var update = function () {
+var resetScene = function () {
+    // remove all geometries from scene
+    meshesArray.forEach(function (mesh) {
+        scene.remove(mesh);
+    });
+    meshesArray = [];
+}
+
+var createMeshes = function (linkM) {
+    var boxGeometry1 = new THREE.BoxGeometry(1, Math.max(...linkM[0]), 1);
+    var boxGeometry2 = new THREE.BoxGeometry(1, Math.max(...linkM[1]), 1);
+    var boxGeometry3 = new THREE.BoxGeometry(1, Math.max(...linkM[2]), 1);
+    var cube1 = new THREE.Mesh(boxGeometry1, material1);
+    var cube2 = new THREE.Mesh(boxGeometry2, material2);
+    var cube3 = new THREE.Mesh(boxGeometry3, material3);
+    var joint1 = new THREE.Mesh(sphereGeometry, material4);
+    var joint2 = new THREE.Mesh(sphereGeometry, material4);
+    var joint3 = new THREE.Mesh(sphereGeometry, material4);
+    var pivotPoint1 = new THREE.Object3D();
+    var pivotPoint2 = new THREE.Object3D();
+    var pivotPoint3 = new THREE.Object3D();
+
+    joint1.eulerOrder = 'ZYX';
+    joint2.eulerOrder = 'ZYX';
+    joint3.eulerOrder = 'ZYX';
+    joint1.add(pivotPoint1);
+    joint2.add(pivotPoint2);
+    joint3.add(pivotPoint3);
+    pivotPoint1.add(cube1);
+    pivotPoint2.add(cube2);
+    pivotPoint3.add(cube3);
+    scene.add(joint1);
+    scene.add(joint2);
+    scene.add(joint3);
+
+    cube1.translateY(Math.max(...linkM[0]) / 2);
+    cube2.translateY(Math.max(...linkM[1]) / 2);
+    cube3.translateY(Math.max(...linkM[2]) / 2);
+    pivotPoint2.rotation.z = -Math.PI / 2;
+    pivotPoint3.rotation.z = -Math.PI / 2;
+
+    meshesArray = [cube1, cube2, cube3, joint1, joint2, joint3];
+}
+
+var transformMeshes = function (baseTM, linkP) {
+    // translate each mesh to calculated position
+    meshesArray[4].position.set(linkP[0][0], linkP[0][1], linkP[0][2]);
+    meshesArray[5].position.set(linkP[1][0], linkP[1][1], linkP[1][2]);
+    // calculate euler angle for each baseTM
+    var eulerM = [toEuler(baseTM[0]), toEuler(baseTM[1]), toEuler(baseTM[2])];
+    // apply graphical rotation to each link
+    console.log("Euler");
+    console.log(eulerM[0]);
+    console.log(eulerM[1]);
+    console.log(eulerM[2]);
+    var a1 = meshesArray[3].rotation;
+    var a2 = meshesArray[4].rotation;
+    var a3 = meshesArray[5].rotation;
+
+    console.log("Link Rotation");
+    console.log(a1);
+    console.log(a2);
+    console.log(a3);
+
+    // rotate
+    meshesArray[3].rotation.setFromVector3(new THREE.Vector3(eulerM[0][0], eulerM[0][1], eulerM[0][2]));
+    meshesArray[4].rotation.setFromVector3(new THREE.Vector3(eulerM[1][0], eulerM[1][1], eulerM[1][2]));
+    meshesArray[5].rotation.setFromVector3(new THREE.Vector3(eulerM[2][0], eulerM[2][1], eulerM[2][2]));
+
+}
+
+var update = function (linkM, baseTM, linkP) {
+    resetScene();
+    createMeshes(linkM);
+    transformMeshes(baseTM, linkP);
 }
 
 var render = function () {
@@ -235,7 +335,7 @@ var render = function () {
 
 var gl_main = function () {
     requestAnimationFrame(gl_main);
-    update();
     render();
 }
+
 gl_main();
