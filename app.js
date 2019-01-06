@@ -192,7 +192,7 @@ function backwardKinematic() {
 
     // TODO: calculate ln and tn
 
-    // TODO: show values to user
+    // TODO: set value in input field
 
     // use forward kinematic function to calculate 
     // transformation matrices and render the robot
@@ -227,30 +227,20 @@ window.addEventListener("resize", function () {
 // enable mouse camera control
 var controls = new THREE.OrbitControls(camera, renderer.domElement);
 
-// create plane geometry
+// create geometry for plane
 var planeGeometry = new THREE.PlaneGeometry(50, 50, 50, 50);
 var planeMaterial = new THREE.MeshBasicMaterial({ color: 0x555555, wireframe: true });
 var plane = new THREE.Mesh(planeGeometry, planeMaterial);
 plane.rotation.x = Math.PI / 2;
 scene.add(plane);
 
-// create robot geometry
+// create geometry for robot
 var material1 = new THREE.MeshBasicMaterial({ color: 0xffff00, wireframe: true });
 var material2 = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true });
 var material3 = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
-
-var sphereGeometry = new THREE.SphereGeometry(0.5, 10, 10);
 var material4 = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
 
 var meshesArray = [];
-
-var defaultPosition = function () {
-    // reset all geometries position to default
-    meshesArray.forEach(function (mesh) {
-        mesh.position.set(0, 0, 0);
-        mesh.rotation.set(0, 0, 0);
-    });
-}
 
 var resetScene = function () {
     // remove all geometries from scene
@@ -261,12 +251,14 @@ var resetScene = function () {
 }
 
 var createMeshes = function (linkM) {
+    // define geometry of each link
     var boxGeometry1 = new THREE.BoxGeometry(1, Math.max(...linkM[0]), 1);
     var boxGeometry2 = new THREE.BoxGeometry(1, Math.max(...linkM[1]), 1);
     var boxGeometry3 = new THREE.BoxGeometry(1, Math.max(...linkM[2]), 1);
     var cube1 = new THREE.Mesh(boxGeometry1, material1);
     var cube2 = new THREE.Mesh(boxGeometry2, material2);
     var cube3 = new THREE.Mesh(boxGeometry3, material3);
+    var sphereGeometry = new THREE.SphereGeometry(0.5, 10, 10);
     var joint1 = new THREE.Mesh(sphereGeometry, material4);
     var joint2 = new THREE.Mesh(sphereGeometry, material4);
     var joint3 = new THREE.Mesh(sphereGeometry, material4);
@@ -274,53 +266,45 @@ var createMeshes = function (linkM) {
     var pivotPoint2 = new THREE.Object3D();
     var pivotPoint3 = new THREE.Object3D();
 
+    // configure euler order 
     joint1.eulerOrder = 'ZYX';
     joint2.eulerOrder = 'ZYX';
     joint3.eulerOrder = 'ZYX';
+
+    // define rotation pivot of each link 
     joint1.add(pivotPoint1);
     joint2.add(pivotPoint2);
     joint3.add(pivotPoint3);
     pivotPoint1.add(cube1);
     pivotPoint2.add(cube2);
     pivotPoint3.add(cube3);
+
+    // add all links to scene
     scene.add(joint1);
     scene.add(joint2);
     scene.add(joint3);
 
+    // setup initial posture
     cube1.translateY(Math.max(...linkM[0]) / 2);
     cube2.translateY(Math.max(...linkM[1]) / 2);
     cube3.translateY(Math.max(...linkM[2]) / 2);
     pivotPoint2.rotation.z = -Math.PI / 2;
     pivotPoint3.rotation.z = -Math.PI / 2;
 
+    //
     meshesArray = [cube1, cube2, cube3, joint1, joint2, joint3];
 }
 
 var transformMeshes = function (baseTM, linkP) {
-    // translate each mesh to calculated position
+    // translate each link to calculated position
     meshesArray[4].position.set(linkP[0][0], linkP[0][1], linkP[0][2]);
     meshesArray[5].position.set(linkP[1][0], linkP[1][1], linkP[1][2]);
     // calculate euler angle for each baseTM
     var eulerM = [toEuler(baseTM[0]), toEuler(baseTM[1]), toEuler(baseTM[2])];
-    // apply graphical rotation to each link
-    console.log("Euler");
-    console.log(eulerM[0]);
-    console.log(eulerM[1]);
-    console.log(eulerM[2]);
-    var a1 = meshesArray[3].rotation;
-    var a2 = meshesArray[4].rotation;
-    var a3 = meshesArray[5].rotation;
-
-    console.log("Link Rotation");
-    console.log(a1);
-    console.log(a2);
-    console.log(a3);
-
-    // rotate
+    // apply rotation to each link
     meshesArray[3].rotation.setFromVector3(new THREE.Vector3(eulerM[0][0], eulerM[0][1], eulerM[0][2]));
     meshesArray[4].rotation.setFromVector3(new THREE.Vector3(eulerM[1][0], eulerM[1][1], eulerM[1][2]));
     meshesArray[5].rotation.setFromVector3(new THREE.Vector3(eulerM[2][0], eulerM[2][1], eulerM[2][2]));
-
 }
 
 var update = function (linkM, baseTM, linkP) {
