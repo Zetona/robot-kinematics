@@ -1,11 +1,7 @@
-// === form input & matrix calculation ===
-
 // Add event listener to buttons
 document.getElementById("fwkBtn").addEventListener("click", forwardKinematic);
 document.getElementById("bwkBtn").addEventListener("click", backwardKinematic);
-document.getElementById("rstBtn").addEventListener("click", reset);
-
-
+document.getElementById("rstBtn").addEventListener("click", resetField);
 
 // Field elements
 input_l1 = document.getElementById("l1");
@@ -17,11 +13,19 @@ input_t3 = document.getElementById("t3");
 input_x = document.getElementById("x");
 input_y = document.getElementById("y");
 input_z = document.getElementById("z");
+input_fields = [input_l1, input_l2, input_l3, input_t1, input_t2, input_t3, input_x, input_y, input_z];
 
 // Sliders 
 slider_t1 = document.getElementById("t1Slider");
 slider_t2 = document.getElementById("t2Slider");
 slider_t3 = document.getElementById("t3Slider");
+
+// Add event listener to fields
+input_fields.forEach(function(input) {
+    input.onchange = function (){
+        matchSlider();
+    };
+  });
 
 // Add event listener to sliders
 slider_t1.oninput = function () {
@@ -64,6 +68,37 @@ function setInputValues(inputValues) {
     input_z.value = inputValues.z;
 }
 
+// Reset input field to default values
+function resetField() {
+    // reset input fields
+    input_l1.value = 5;
+    input_l2.value = 5;
+    input_l3.value = 5;
+    input_t1.value = 0;
+    input_t2.value = 0;
+    input_t3.value = 0;
+
+    // change slider position
+    matchSlider();
+
+    // perform forward kinematic and render default posture
+    forwardKinematic();
+}
+
+// Change input field color (for showing error)
+function changeFieldBG(color){
+    input_x.style.backgroundColor = color;
+    input_y.style.backgroundColor = color;
+    input_z.style.backgroundColor = color;
+}
+
+// Change slider position to match value in the field
+function matchSlider() {
+    slider_t1.value = input_t1.value;
+    slider_t2.value = input_t2.value;
+    slider_t3.value = input_t3.value;
+}
+
 // Converts from degrees to radians.
 Math.radians = function (degrees) {
     return degrees * Math.PI / 180;
@@ -97,6 +132,7 @@ function toEuler(TM) {
     return euler;
 }
 
+// Matrix addition
 function mAdd(A, B) {
     // create Float32Array from input
     A = Float32Array.from(A);
@@ -106,6 +142,7 @@ function mAdd(A, B) {
     return result;
 }
 
+// Matrix multiply
 function mMul(A, B) {
     // create Float32Array from input
     A = Float32Array.from(A);
@@ -129,6 +166,7 @@ function mMul(A, B) {
     return result;
 }
 
+// Calculate transformation matrix to base coordinate
 function calcBaseTM(t1, t2, t3) {
     // convert degree input to radian
     var t1 = Math.radians(t1);
@@ -147,6 +185,7 @@ function calcBaseTM(t1, t2, t3) {
     return [baseC1, baseC2, baseC3];
 }
 
+// Calculate link vector
 function calcLinkM(l1, l2, l3) {
     var LM1 = [0, l1, 0];
     var LM2 = [l2, 0, 0];
@@ -154,6 +193,7 @@ function calcLinkM(l1, l2, l3) {
     return [LM1, LM2, LM3];
 }
 
+// Forward Kinematic
 function forwardKinematic(event, renderOnly = false) {
     // get user input
     var input = getInputValues();
@@ -178,36 +218,48 @@ function forwardKinematic(event, renderOnly = false) {
         input.z = coord[2];
         setInputValues(input);
     }
+    matchSlider();
+    changeFieldBG("white");
 
     // TODO: show calculation result
 
     // update scene
     update(linkM, baseTM, linkP);
+    
 }
 
+// Backward Kinematic
 function backwardKinematic() {
     // get user input
     var input = getInputValues();
-    console.log(input);
 
-    // TODO: calculate ln and tn
+    // === articulated robot ===
+    var r1 = Math.sqrt(Math.pow(input.x, 2) + Math.pow(input.z, 2));
+    var r2 = input.y - input.l1;
+    var r3 = Math.sqrt(Math.pow(r1, 2) + Math.pow(r2, 2));
+    var p1 = Math.acos((Math.pow(input.l3, 2) - Math.pow(input.l2, 2) - Math.pow(r3, 2)) / (-2 * input.l2 * r3));
+    var p2 = Math.atan2(r2, r1);
+    var p3 = Math.acos((Math.pow(r3, 2) - Math.pow(input.l2, 2) - Math.pow(input.l3, 2)) / (-2 * input.l2 * input.l3));
+    var t1 = -Math.atan2(input.z, input.x);
+    var t2 = p2 - p1;
+    var t3 = Math.PI - p3;
 
-    // TODO: set value in input field
+    // validate if angle is valid
+    if (isNaN(t1) || isNaN(t2) || isNaN(t3)) {
+        changeFieldBG("pink");
+        return 0;
+    }
+
+    // set value in input field
+    input_t1.value = Math.degrees(t1);
+    input_t2.value = Math.degrees(t2);
+    input_t3.value = Math.degrees(t3);
 
     // use forward kinematic function to calculate 
-    // transformation matrices and render the robot
-    forwardKinematic(true);
+    // transformation matrices and render
+    forwardKinematic(null, true);
+    return 1;
 }
-
-function reset() {
-    // get variables
-    var input = getInputValues();
-    console.log(input);
-}
-
-
-
-// === render canvas ===
 
 // scene, camera, renderer
 var scene = new THREE.Scene();
@@ -234,14 +286,18 @@ var plane = new THREE.Mesh(planeGeometry, planeMaterial);
 plane.rotation.x = Math.PI / 2;
 scene.add(plane);
 
-// create geometry for robot
+// create geometry for axes
+axes = new THREE.AxisHelper( 10 );
+scene.add( axes );
+
+// create geometry for links
 var material1 = new THREE.MeshBasicMaterial({ color: 0xffff00, wireframe: true });
 var material2 = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true });
 var material3 = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
 var material4 = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
-
 var meshesArray = [];
 
+// empty scene
 var resetScene = function () {
     // remove all geometries from scene
     meshesArray.forEach(function (mesh) {
@@ -250,6 +306,7 @@ var resetScene = function () {
     meshesArray = [];
 }
 
+// create meshes for the robot
 var createMeshes = function (linkM) {
     // define geometry of each link
     var boxGeometry1 = new THREE.BoxGeometry(1, Math.max(...linkM[0]), 1);
@@ -291,10 +348,11 @@ var createMeshes = function (linkM) {
     pivotPoint2.rotation.z = -Math.PI / 2;
     pivotPoint3.rotation.z = -Math.PI / 2;
 
-    //
+    // array of meshes
     meshesArray = [cube1, cube2, cube3, joint1, joint2, joint3];
 }
 
+// transform each link using calculated values
 var transformMeshes = function (baseTM, linkP) {
     // translate each link to calculated position
     meshesArray[4].position.set(linkP[0][0], linkP[0][1], linkP[0][2]);
@@ -307,16 +365,19 @@ var transformMeshes = function (baseTM, linkP) {
     meshesArray[5].rotation.setFromVector3(new THREE.Vector3(eulerM[2][0], eulerM[2][1], eulerM[2][2]));
 }
 
+// update the robot with calculated values
 var update = function (linkM, baseTM, linkP) {
     resetScene();
     createMeshes(linkM);
     transformMeshes(baseTM, linkP);
 }
 
+// render the scene
 var render = function () {
     renderer.render(scene, camera);
 };
 
+// main function of webgl
 var gl_main = function () {
     requestAnimationFrame(gl_main);
     render();
