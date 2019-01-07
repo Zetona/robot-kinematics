@@ -16,30 +16,37 @@ input_z = document.getElementById("z");
 input_fields = [input_l1, input_l2, input_l3, input_t1, input_t2, input_t3, input_x, input_y, input_z];
 
 // Sliders 
+slider_l1 = document.getElementById("l1Slider");
+slider_l2 = document.getElementById("l2Slider");
+slider_l3 = document.getElementById("l3Slider");
 slider_t1 = document.getElementById("t1Slider");
 slider_t2 = document.getElementById("t2Slider");
 slider_t3 = document.getElementById("t3Slider");
+slider_x = document.getElementById("xSlider");
+slider_y = document.getElementById("ySlider");
+slider_z = document.getElementById("zSlider");
+sliders = [slider_l1, slider_l2, slider_l3, slider_t1, slider_t2, slider_t3, slider_x, slider_y, slider_z];
+
 
 // Add event listener to fields
-input_fields.forEach(function(input) {
-    input.onchange = function (){
+input_fields.forEach(function (input) {
+    input.onchange = function () {
         matchSlider();
     };
-  });
+});
 
 // Add event listener to sliders
-slider_t1.oninput = function () {
-    input_t1.value = this.value;
-    forwardKinematic();
-}
-slider_t2.oninput = function () {
-    input_t2.value = this.value;
-    forwardKinematic();
-}
-slider_t3.oninput = function () {
-    input_t3.value = this.value;
-    forwardKinematic();
-}
+sliders.forEach(function (slider, i) {
+    slider.oninput = function () {
+        input_fields[i].value = this.value;
+        if (i<6){
+            forwardKinematic();
+        }
+        else {
+            backwardKinematic();
+        }
+    };
+});
 
 function getInputValues() {
     var inputValues = {
@@ -86,17 +93,29 @@ function resetField() {
 }
 
 // Change input field color (for showing error)
-function changeFieldBG(color){
-    input_x.style.backgroundColor = color;
-    input_y.style.backgroundColor = color;
-    input_z.style.backgroundColor = color;
+function changeFieldBG(color) {
+    if (!color) {
+        input_x.removeAttribute("style");
+        input_y.removeAttribute("style");
+        input_z.removeAttribute("style");
+    } else {
+        input_x.style.backgroundColor = color;
+        input_y.style.backgroundColor = color;
+        input_z.style.backgroundColor = color;
+    }
 }
 
 // Change slider position to match value in the field
 function matchSlider() {
+    slider_l1.value = input_l1.value;
+    slider_l2.value = input_l2.value;
+    slider_l3.value = input_l3.value;
     slider_t1.value = input_t1.value;
     slider_t2.value = input_t2.value;
     slider_t3.value = input_t3.value;
+    slider_x.value = input_x.value;
+    slider_y.value = input_y.value;
+    slider_z.value = input_z.value;
 }
 
 // Converts from degrees to radians.
@@ -219,13 +238,13 @@ function forwardKinematic(event, renderOnly = false) {
         setInputValues(input);
     }
     matchSlider();
-    changeFieldBG("white");
+    changeFieldBG(null);
 
     // TODO: show calculation result
 
     // update scene
     update(linkM, baseTM, linkP);
-    
+
 }
 
 // Backward Kinematic
@@ -287,8 +306,8 @@ plane.rotation.x = Math.PI / 2;
 scene.add(plane);
 
 // create geometry for axes
-axes = new THREE.AxisHelper( 10 );
-scene.add( axes );
+axes = new THREE.AxisHelper(25);
+scene.add(axes);
 
 // create geometry for links
 var material1 = new THREE.MeshBasicMaterial({ color: 0xffff00, wireframe: true });
