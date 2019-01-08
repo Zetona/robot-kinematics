@@ -1,31 +1,90 @@
-// Add event listener to buttons
-document.getElementById("fwkBtn").addEventListener("click", forwardKinematic);
-document.getElementById("bwkBtn").addEventListener("click", backwardKinematic);
-document.getElementById("rstBtn").addEventListener("click", resetField);
+// === Variables ===
+
+// Enum for robot types
+var RobotType = Object.freeze({ "cartesian": 0, "cylindrical": 1, "spherical": 2, "articulated": 3 })
+var robotType = RobotType.articulated;
+
+// Buttons
+var button_car = document.getElementById("carBtn")
+var button_cyl = document.getElementById("cylBtn")
+var button_sph = document.getElementById("sphBtn")
+var button_art = document.getElementById("artBtn")
+var button_fwd = document.getElementById("fwkBtn")
+var button_bwk = document.getElementById("bwkBtn")
+var button_rst = document.getElementById("rstBtn")
 
 // Field elements
-input_l1 = document.getElementById("l1");
-input_l2 = document.getElementById("l2");
-input_l3 = document.getElementById("l3");
-input_t1 = document.getElementById("t1");
-input_t2 = document.getElementById("t2");
-input_t3 = document.getElementById("t3");
-input_x = document.getElementById("x");
-input_y = document.getElementById("y");
-input_z = document.getElementById("z");
-input_fields = [input_l1, input_l2, input_l3, input_t1, input_t2, input_t3, input_x, input_y, input_z];
+var input_l1 = document.getElementById("l1");
+var input_l2 = document.getElementById("l2");
+var input_l3 = document.getElementById("l3");
+var input_t1 = document.getElementById("t1");
+var input_t2 = document.getElementById("t2");
+var input_t3 = document.getElementById("t3");
+var input_x = document.getElementById("x");
+var input_y = document.getElementById("y");
+var input_z = document.getElementById("z");
+var input_fields = [input_l1, input_l2, input_l3, input_t1, input_t2, input_t3, input_x, input_y, input_z];
 
 // Sliders 
-slider_l1 = document.getElementById("l1Slider");
-slider_l2 = document.getElementById("l2Slider");
-slider_l3 = document.getElementById("l3Slider");
-slider_t1 = document.getElementById("t1Slider");
-slider_t2 = document.getElementById("t2Slider");
-slider_t3 = document.getElementById("t3Slider");
-slider_x = document.getElementById("xSlider");
-slider_y = document.getElementById("ySlider");
-slider_z = document.getElementById("zSlider");
-sliders = [slider_l1, slider_l2, slider_l3, slider_t1, slider_t2, slider_t3, slider_x, slider_y, slider_z];
+var slider_l1 = document.getElementById("l1Slider");
+var slider_l2 = document.getElementById("l2Slider");
+var slider_l3 = document.getElementById("l3Slider");
+var slider_t1 = document.getElementById("t1Slider");
+var slider_t2 = document.getElementById("t2Slider");
+var slider_t3 = document.getElementById("t3Slider");
+var slider_x = document.getElementById("xSlider");
+var slider_y = document.getElementById("ySlider");
+var slider_z = document.getElementById("zSlider");
+var sliders = [slider_l1, slider_l2, slider_l3, slider_t1, slider_t2, slider_t3, slider_x, slider_y, slider_z];
+
+// scene, camera, renderer
+var scene = new THREE.Scene();
+var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.z = 20;
+var renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// update renderer and camera when browser is resized
+window.addEventListener("resize", function () {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+})
+
+// enable mouse camera control
+var controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+// create geometry for plane
+var planeGeometry = new THREE.PlaneGeometry(50, 50, 50, 50);
+var planeMaterial = new THREE.MeshBasicMaterial({ color: 0x555555, wireframe: true });
+var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+plane.rotation.x = Math.PI / 2;
+scene.add(plane);
+
+// create geometry for axes
+var axes = new THREE.AxesHelper(25);
+scene.add(axes);
+
+// create geometry for links
+var material1 = new THREE.MeshBasicMaterial({ color: 0xffff00, wireframe: true });
+var material2 = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true });
+var material3 = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+var material4 = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+var meshesArray = [];
+
+
+
+// === Event listeners ===
+
+// Add event listener to buttons
+button_car.addEventListener("click", function(){robotChange(this.value)});
+button_cyl.addEventListener("click", function(){robotChange(this.value)});
+button_sph.addEventListener("click", function(){robotChange(this.value)});
+button_art.addEventListener("click", function(){robotChange(this.value)});
+button_fwd.addEventListener("click", forwardKinematic);
+button_bwk.addEventListener("click", backwardKinematic);
+button_rst.addEventListener("click", resetField);
 
 // Add event listener to fields
 input_fields.forEach(function (input) {
@@ -68,6 +127,11 @@ window.onkeypress = function (e) {
     backwardKinematic();
 }
 
+
+
+// === Functions ===
+
+// Get input values
 function getInputValues() {
     var inputValues = {
         l1: input_l1.value,
@@ -83,6 +147,7 @@ function getInputValues() {
     return inputValues;
 }
 
+// Set field values
 function setInputValues(inputValues) {
     input_l1.value = inputValues.l1;
     input_l2.value = inputValues.l2;
@@ -104,6 +169,7 @@ function resetField() {
     input_t1.value = 0;
     input_t2.value = 0;
     input_t3.value = 0;
+    changeFieldBG(null, null);
 
     // change slider position
     matchSlider();
@@ -112,16 +178,31 @@ function resetField() {
     forwardKinematic();
 }
 
-// Change input field color (for showing error)
-function changeFieldBG(color) {
-    if (!color) {
-        input_x.removeAttribute("style");
-        input_y.removeAttribute("style");
-        input_z.removeAttribute("style");
+// Reset the fields and re-render the scene when robot type is changed
+function robotChange(inputRobotType) {
+    robotType = inputRobotType;
+    resetField();
+    changeFieldBG();
+    forwardKinematic();
+}
+
+// Change input field color (for showing error to user)
+function changeFieldBG(type, color) {
+    if (type == 0) {
+        var inputs = [input_l1, input_l2, input_l3];
+    } else if (type == 1) {
+        var inputs = [input_x, input_y, input_z];
     } else {
-        input_x.style.backgroundColor = color;
-        input_y.style.backgroundColor = color;
-        input_z.style.backgroundColor = color;
+        var inputs = [input_l1, input_l2, input_l3, input_x, input_y, input_z];
+    }
+    if (!color) {
+        inputs.forEach(function (input) {
+            input.removeAttribute("style");
+        });
+    } else {
+        inputs.forEach(function (input) {
+            input.style.backgroundColor = color;
+        });
     }
 }
 
@@ -139,8 +220,13 @@ function matchSlider() {
 }
 
 // Converts from degrees to radians.
-Math.radians = function (degrees) {
+function toRadians(degrees) {
     return degrees * Math.PI / 180;
+};
+
+// Converts from radians to degrees.
+function toDegrees(radians) {
+    return radians * 180 / Math.PI;
 };
 
 // Round number
@@ -152,11 +238,6 @@ function round(num, places = 10) {
 function roundArray(A) {
     return Array.from(A, x => round(x));
 }
-
-// Converts from radians to degrees.
-Math.degrees = function (radians) {
-    return radians * 180 / Math.PI;
-};
 
 // Convert transformation matrix to euler angle
 function toEuler(TM) {
@@ -207,14 +288,21 @@ function mMul(A, B) {
 // Calculate transformation matrix to base coordinate
 function calcBaseTM(t1, t2, t3) {
     // convert degree input to radian
-    var t1 = Math.radians(t1);
-    var t2 = Math.radians(t2);
-    var t3 = Math.radians(t3);
+    var t1 = toRadians(t1);
+    var t2 = toRadians(t2);
+    var t3 = toRadians(t3);
 
     // calculate local transformation matrix
-    var C1 = [Math.cos(t1), 0, Math.sin(t1), 0, 1, 0, -Math.sin(t1), 0, Math.cos(t1)]
-    var C2 = [Math.cos(t2), -Math.sin(t2), 0, Math.sin(t2), Math.cos(t2), 0, 0, 0, 1]
-    var C3 = [Math.cos(t3), -Math.sin(t3), 0, Math.sin(t3), Math.cos(t3), 0, 0, 0, 1]
+    if (robotType == RobotType.cartesian) {
+        var C1 = [1, 0, 0, 0, 1, 0, 0, 0, 1]
+        var C2 = [1, 0, 0, 0, 1, 0, 0, 0, 1]
+        var C3 = [1, 0, 0, 0, 1, 0, 0, 0, 1]
+    }
+    else if (robotType == RobotType.articulated) {
+        var C1 = [Math.cos(t1), 0, Math.sin(t1), 0, 1, 0, -Math.sin(t1), 0, Math.cos(t1)]
+        var C2 = [Math.cos(t2), -Math.sin(t2), 0, Math.sin(t2), Math.cos(t2), 0, 0, 0, 1]
+        var C3 = [Math.cos(t3), -Math.sin(t3), 0, Math.sin(t3), Math.cos(t3), 0, 0, 0, 1]
+    }
 
     //calculate base transformation matrix
     var baseC1 = C1;
@@ -225,9 +313,15 @@ function calcBaseTM(t1, t2, t3) {
 
 // Calculate link vector
 function calcLinkM(l1, l2, l3) {
-    var LM1 = [0, l1, 0];
-    var LM2 = [l2, 0, 0];
-    var LM3 = [l3, 0, 0];
+    if (robotType == RobotType.cartesian) {
+        var LM1 = [l1, 0, 0];
+        var LM2 = [0, 0, l2];
+        var LM3 = [0, l3, 0];
+    } else if (robotType == RobotType.articulated) {
+        var LM1 = [0, l1, 0];
+        var LM2 = [l2, 0, 0];
+        var LM3 = [l3, 0, 0];
+    }
     return [LM1, LM2, LM3];
 }
 
@@ -257,7 +351,7 @@ function forwardKinematic(event, renderOnly = false) {
         setInputValues(input);
     }
     matchSlider();
-    changeFieldBG(null);
+    changeFieldBG(null, null);
 
     // TODO: show calculation result
 
@@ -271,27 +365,46 @@ function backwardKinematic() {
     // get user input
     var input = getInputValues();
 
-    // === articulated robot ===
-    var r1 = Math.sqrt(Math.pow(input.x, 2) + Math.pow(input.z, 2));
-    var r2 = input.y - input.l1;
-    var r3 = Math.sqrt(Math.pow(r1, 2) + Math.pow(r2, 2));
-    var p1 = Math.acos((Math.pow(input.l3, 2) - Math.pow(input.l2, 2) - Math.pow(r3, 2)) / (-2 * input.l2 * r3));
-    var p2 = Math.atan2(r2, r1);
-    var p3 = Math.acos((Math.pow(r3, 2) - Math.pow(input.l2, 2) - Math.pow(input.l3, 2)) / (-2 * input.l2 * input.l3));
-    var t1 = -Math.atan2(input.z, input.x);
-    var t2 = p2 - p1;
-    var t3 = Math.PI - p3;
+    if (robotType == RobotType.cartesian) {
+        // calculate joint angle / link length
+        var l1 = input.x;
+        var l2 = input.z;
+        var l3 = input.y;
 
-    // validate if angle is valid
-    if (isNaN(t1) || isNaN(t2) || isNaN(t3)) {
-        changeFieldBG("pink");
-        return 0;
+        // validate if joint angle / link length is valid
+        if (l1 < 0 || l2 < 0 || l3 < 0) {
+            changeFieldBG(1, "pink");
+            return 0;
+        }
+
+        // set value in input field
+        input_l1.value = l1;
+        input_l2.value = l2;
+        input_l3.value = l3;
     }
+    else if (robotType == RobotType.articulated) {
+        // calculate joint angle / link length
+        var r1 = Math.sqrt(Math.pow(input.x, 2) + Math.pow(input.z, 2));
+        var r2 = input.y - input.l1;
+        var r3 = Math.sqrt(Math.pow(r1, 2) + Math.pow(r2, 2));
+        var p1 = Math.acos((Math.pow(input.l3, 2) - Math.pow(input.l2, 2) - Math.pow(r3, 2)) / (-2 * input.l2 * r3));
+        var p2 = Math.atan2(r2, r1);
+        var p3 = Math.acos((Math.pow(r3, 2) - Math.pow(input.l2, 2) - Math.pow(input.l3, 2)) / (-2 * input.l2 * input.l3));
+        var t1 = -Math.atan2(input.z, input.x);
+        var t2 = p2 - p1;
+        var t3 = Math.PI - p3;
 
-    // set value in input field
-    input_t1.value = Math.degrees(t1);
-    input_t2.value = Math.degrees(t2);
-    input_t3.value = Math.degrees(t3);
+        // validate if joint angle / link length is valid
+        if (isNaN(t1) || isNaN(t2) || isNaN(t3)) {
+            changeFieldBG(1, "pink");
+            return 0;
+        }
+
+        // set value in input field
+        input_t1.value = toDegrees(t1);
+        input_t2.value = toDegrees(t2);
+        input_t3.value = toDegrees(t3);
+    }
 
     // use forward kinematic function to calculate 
     // transformation matrices and render
@@ -299,44 +412,8 @@ function backwardKinematic() {
     return 1;
 }
 
-// scene, camera, renderer
-var scene = new THREE.Scene();
-var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.z = 20;
-var renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
-
-// update renderer and camera when browser is resized
-window.addEventListener("resize", function () {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-})
-
-// enable mouse camera control
-var controls = new THREE.OrbitControls(camera, renderer.domElement);
-
-// create geometry for plane
-var planeGeometry = new THREE.PlaneGeometry(50, 50, 50, 50);
-var planeMaterial = new THREE.MeshBasicMaterial({ color: 0x555555, wireframe: true });
-var plane = new THREE.Mesh(planeGeometry, planeMaterial);
-plane.rotation.x = Math.PI / 2;
-scene.add(plane);
-
-// create geometry for axes
-axes = new THREE.AxesHelper(25);
-scene.add(axes);
-
-// create geometry for links
-var material1 = new THREE.MeshBasicMaterial({ color: 0xffff00, wireframe: true });
-var material2 = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true });
-var material3 = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
-var material4 = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
-var meshesArray = [];
-
 // empty scene
-var resetScene = function () {
+function resetScene() {
     // remove all geometries from scene
     meshesArray.forEach(function (mesh) {
         scene.remove(mesh);
@@ -345,7 +422,7 @@ var resetScene = function () {
 }
 
 // create meshes for the robot
-var createMeshes = function (linkM) {
+function createMeshes(linkM) {
     // define geometry of each link
     var boxGeometry1 = new THREE.BoxGeometry(1, Math.max(...linkM[0]), 1);
     var boxGeometry2 = new THREE.BoxGeometry(1, Math.max(...linkM[1]), 1);
@@ -383,15 +460,21 @@ var createMeshes = function (linkM) {
     cube1.translateY(Math.max(...linkM[0]) / 2);
     cube2.translateY(Math.max(...linkM[1]) / 2);
     cube3.translateY(Math.max(...linkM[2]) / 2);
-    pivotPoint2.rotation.z = -Math.PI / 2;
-    pivotPoint3.rotation.z = -Math.PI / 2;
+    if (robotType == RobotType.cartesian) {
+        pivotPoint1.rotation.z = -Math.PI / 2;
+        pivotPoint2.rotation.x = Math.PI / 2;
+    }
+    else if (robotType == RobotType.articulated) {
+        pivotPoint2.rotation.z = -Math.PI / 2;
+        pivotPoint3.rotation.z = -Math.PI / 2;
+    }
 
     // array of meshes
     meshesArray = [cube1, cube2, cube3, joint1, joint2, joint3];
 }
 
 // transform each link using calculated values
-var transformMeshes = function (baseTM, linkP) {
+function transformMeshes(baseTM, linkP) {
     // translate each link to calculated position
     meshesArray[4].position.set(linkP[0][0], linkP[0][1], linkP[0][2]);
     meshesArray[5].position.set(linkP[1][0], linkP[1][1], linkP[1][2]);
@@ -404,19 +487,19 @@ var transformMeshes = function (baseTM, linkP) {
 }
 
 // update the robot with calculated values
-var update = function (linkM, baseTM, linkP) {
+function update(linkM, baseTM, linkP) {
     resetScene();
     createMeshes(linkM);
     transformMeshes(baseTM, linkP);
 }
 
 // render the scene
-var render = function () {
+function render() {
     renderer.render(scene, camera);
 };
 
 // main function of webgl
-var gl_main = function () {
+function gl_main() {
     requestAnimationFrame(gl_main);
     render();
 }
