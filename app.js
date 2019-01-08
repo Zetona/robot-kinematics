@@ -305,14 +305,13 @@ function mMul(A, B) {
     return result;
 }
 
-// Calculate transformation matrix to base coordinate
-function calcBaseTM(t1, t2, t3) {
+// Calculate local transformation matrix
+function calcLocalTM(t1, t2, t3) {
     // convert degree input to radian
     var t1 = toRadians(t1);
     var t2 = toRadians(t2);
     var t3 = toRadians(t3);
 
-    // calculate local transformation matrix
     if (robotType == RobotType.cartesian) {
         var C1 = [1, 0, 0, 0, 1, 0, 0, 0, 1]
         var C2 = [1, 0, 0, 0, 1, 0, 0, 0, 1]
@@ -330,8 +329,11 @@ function calcBaseTM(t1, t2, t3) {
         var C2 = [Math.cos(t2), -Math.sin(t2), 0, Math.sin(t2), Math.cos(t2), 0, 0, 0, 1]
         var C3 = [Math.cos(t3), -Math.sin(t3), 0, Math.sin(t3), Math.cos(t3), 0, 0, 0, 1]
     }
+    return [C1, C2, C3];
+}
 
-    //calculate base transformation matrix
+// Calculate base transformation matrix
+function calcBaseTM(C1, C2, C3) {
     var baseC1 = C1;
     var baseC2 = mMul(C1, C2);
     var baseC3 = mMul(baseC2, C3);
@@ -374,16 +376,25 @@ function forwardKinematic(event, renderOnly = false) {
     }
 
     // calculate local link matrices
-    linkM = calcLinkM(input.l1, input.l2, input.l3);
+    var linkM = calcLinkM(input.l1, input.l2, input.l3);
+
+    // calculate local transformation matrices
+    var localTM = calcLocalTM(input.t1, input.t2, input.t3);
 
     // calculate base transformation matrices
-    baseTM = calcBaseTM(input.t1, input.t2, input.t3);
+    var baseTM = calcBaseTM(localTM[0], localTM[1], localTM[2]);
 
     // calculate each link's base end tip position
     var link1p = mMul(baseTM[0], linkM[0]);
     var link2p = mAdd(mMul(baseTM[1], linkM[1]), link1p);
     var link3p = mAdd(mMul(baseTM[2], linkM[2]), link2p);
     var linkP = [link1p, link2p, link3p];
+
+    // calculate euler angle
+    var eulerM = [toEuler(baseTM[0]), toEuler(baseTM[1]), toEuler(baseTM[2])];
+
+    // update scene
+    update(linkM, linkP, eulerM);
 
     // show coordinate to user
     if (!renderOnly) {
@@ -397,11 +408,95 @@ function forwardKinematic(event, renderOnly = false) {
     changeFieldBG(null, null);
 
     // show calculation result
+    document.getElementById("L1-x").innerHTML = round(linkM[0][0], 2);
+    document.getElementById("L1-y").innerHTML = round(linkM[0][1], 2);
+    document.getElementById("L1-z").innerHTML = round(linkM[0][2], 2);
+    document.getElementById("L2-x").innerHTML = round(linkM[1][0], 2);
+    document.getElementById("L2-y").innerHTML = round(linkM[1][1], 2);
+    document.getElementById("L2-z").innerHTML = round(linkM[1][2], 2);
+    document.getElementById("L3-x").innerHTML = round(linkM[2][0], 2);
+    document.getElementById("L3-y").innerHTML = round(linkM[2][1], 2);
+    document.getElementById("L3-z").innerHTML = round(linkM[2][2], 2);
 
+    document.getElementById("C1-1").innerHTML = round(localTM[0][0], 2);
+    document.getElementById("C1-2").innerHTML = round(localTM[0][1], 2);
+    document.getElementById("C1-3").innerHTML = round(localTM[0][2], 2);
+    document.getElementById("C1-4").innerHTML = round(localTM[0][3], 2);
+    document.getElementById("C1-5").innerHTML = round(localTM[0][4], 2);
+    document.getElementById("C1-6").innerHTML = round(localTM[0][5], 2);
+    document.getElementById("C1-7").innerHTML = round(localTM[0][6], 2);
+    document.getElementById("C1-8").innerHTML = round(localTM[0][7], 2);
+    document.getElementById("C1-9").innerHTML = round(localTM[0][8], 2);
 
-    // update scene
-    update(linkM, baseTM, linkP);
+    document.getElementById("C2-1").innerHTML = round(localTM[1][0], 2);
+    document.getElementById("C2-2").innerHTML = round(localTM[1][1], 2);
+    document.getElementById("C2-3").innerHTML = round(localTM[1][2], 2);
+    document.getElementById("C2-4").innerHTML = round(localTM[1][3], 2);
+    document.getElementById("C2-5").innerHTML = round(localTM[1][4], 2);
+    document.getElementById("C2-6").innerHTML = round(localTM[1][5], 2);
+    document.getElementById("C2-7").innerHTML = round(localTM[1][6], 2);
+    document.getElementById("C2-8").innerHTML = round(localTM[1][7], 2);
+    document.getElementById("C2-9").innerHTML = round(localTM[1][8], 2);
 
+    document.getElementById("C3-1").innerHTML = round(localTM[2][0], 2);
+    document.getElementById("C3-2").innerHTML = round(localTM[2][1], 2);
+    document.getElementById("C3-3").innerHTML = round(localTM[2][2], 2);
+    document.getElementById("C3-4").innerHTML = round(localTM[2][3], 2);
+    document.getElementById("C3-5").innerHTML = round(localTM[2][4], 2);
+    document.getElementById("C3-6").innerHTML = round(localTM[2][5], 2);
+    document.getElementById("C3-7").innerHTML = round(localTM[2][6], 2);
+    document.getElementById("C3-8").innerHTML = round(localTM[2][7], 2);
+    document.getElementById("C3-9").innerHTML = round(localTM[2][8], 2);
+
+    document.getElementById("0C1-1").innerHTML = round(baseTM[0][0], 2);
+    document.getElementById("0C1-2").innerHTML = round(baseTM[0][1], 2);
+    document.getElementById("0C1-3").innerHTML = round(baseTM[0][2], 2);
+    document.getElementById("0C1-4").innerHTML = round(baseTM[0][3], 2);
+    document.getElementById("0C1-5").innerHTML = round(baseTM[0][4], 2);
+    document.getElementById("0C1-6").innerHTML = round(baseTM[0][5], 2);
+    document.getElementById("0C1-7").innerHTML = round(baseTM[0][6], 2);
+    document.getElementById("0C1-8").innerHTML = round(baseTM[0][7], 2);
+    document.getElementById("0C1-9").innerHTML = round(baseTM[0][8], 2);
+
+    document.getElementById("0C2-1").innerHTML = round(baseTM[1][0], 2);
+    document.getElementById("0C2-2").innerHTML = round(baseTM[1][1], 2);
+    document.getElementById("0C2-3").innerHTML = round(baseTM[1][2], 2);
+    document.getElementById("0C2-4").innerHTML = round(baseTM[1][3], 2);
+    document.getElementById("0C2-5").innerHTML = round(baseTM[1][4], 2);
+    document.getElementById("0C2-6").innerHTML = round(baseTM[1][5], 2);
+    document.getElementById("0C2-7").innerHTML = round(baseTM[1][6], 2);
+    document.getElementById("0C2-8").innerHTML = round(baseTM[1][7], 2);
+    document.getElementById("0C2-9").innerHTML = round(baseTM[1][8], 2);
+
+    document.getElementById("0C3-1").innerHTML = round(baseTM[2][0], 2);
+    document.getElementById("0C3-2").innerHTML = round(baseTM[2][1], 2);
+    document.getElementById("0C3-3").innerHTML = round(baseTM[2][2], 2);
+    document.getElementById("0C3-4").innerHTML = round(baseTM[2][3], 2);
+    document.getElementById("0C3-5").innerHTML = round(baseTM[2][4], 2);
+    document.getElementById("0C3-6").innerHTML = round(baseTM[2][5], 2);
+    document.getElementById("0C3-7").innerHTML = round(baseTM[2][6], 2);
+    document.getElementById("0C3-8").innerHTML = round(baseTM[2][7], 2);
+    document.getElementById("0C3-9").innerHTML = round(baseTM[2][8], 2);
+
+    document.getElementById("P1-x").innerHTML = round(linkP[0][0], 2);
+    document.getElementById("P1-y").innerHTML = round(linkP[0][1], 2);
+    document.getElementById("P1-z").innerHTML = round(linkP[0][2], 2);
+    document.getElementById("P2-x").innerHTML = round(linkP[1][0], 2);
+    document.getElementById("P2-y").innerHTML = round(linkP[1][1], 2);
+    document.getElementById("P2-z").innerHTML = round(linkP[1][2], 2);
+    document.getElementById("P3-x").innerHTML = round(linkP[2][0], 2);
+    document.getElementById("P3-y").innerHTML = round(linkP[2][1], 2);
+    document.getElementById("P3-z").innerHTML = round(linkP[2][2], 2);
+
+    document.getElementById("E1-a").innerHTML = round(eulerM[0][0], 2);
+    document.getElementById("E1-b").innerHTML = round(eulerM[0][1], 2);
+    document.getElementById("E1-g").innerHTML = round(eulerM[0][2], 2);
+    document.getElementById("E2-a").innerHTML = round(eulerM[1][0], 2);
+    document.getElementById("E2-b").innerHTML = round(eulerM[1][1], 2);
+    document.getElementById("E2-g").innerHTML = round(eulerM[1][2], 2);
+    document.getElementById("E3-a").innerHTML = round(eulerM[2][0], 2);
+    document.getElementById("E3-b").innerHTML = round(eulerM[2][1], 2);
+    document.getElementById("E3-g").innerHTML = round(eulerM[2][2], 2);
 }
 
 // Backward Kinematic
@@ -553,12 +648,10 @@ function createMeshes(linkM) {
 }
 
 // transform each link using calculated values
-function transformMeshes(baseTM, linkP) {
+function transformMeshes(linkP, eulerM) {
     // translate each link to calculated position
     meshesArray[4].position.set(linkP[0][0], linkP[0][1], linkP[0][2]);
     meshesArray[5].position.set(linkP[1][0], linkP[1][1], linkP[1][2]);
-    // calculate euler angle for each baseTM
-    var eulerM = [toEuler(baseTM[0]), toEuler(baseTM[1]), toEuler(baseTM[2])];
     // apply rotation to each link
     meshesArray[3].rotation.setFromVector3(new THREE.Vector3(eulerM[0][0], eulerM[0][1], eulerM[0][2]));
     meshesArray[4].rotation.setFromVector3(new THREE.Vector3(eulerM[1][0], eulerM[1][1], eulerM[1][2]));
@@ -566,10 +659,10 @@ function transformMeshes(baseTM, linkP) {
 }
 
 // update the robot with calculated values
-function update(linkM, baseTM, linkP) {
+function update(linkM, linkP, eulerM) {
     resetScene();
     createMeshes(linkM);
-    transformMeshes(baseTM, linkP);
+    transformMeshes(linkP, eulerM);
 }
 
 // render the scene
