@@ -4,14 +4,20 @@
 var RobotType = Object.freeze({ "cartesian": 0, "cylindrical": 1, "spherical": 2, "articulated": 3 })
 var robotType = RobotType.articulated;
 
+// Div and div toggler
+var div_input = document.getElementById("info-input");
+var div_calculation = document.getElementById("info-calculation");
+var toggle_input = document.getElementById("toggle-input");
+var toggle_calculation = document.getElementById("toggle-calculation");
+
 // Buttons
-var button_car = document.getElementById("carBtn")
-var button_cyl = document.getElementById("cylBtn")
-var button_sph = document.getElementById("sphBtn")
-var button_art = document.getElementById("artBtn")
-var button_fwd = document.getElementById("fwkBtn")
-var button_bwk = document.getElementById("bwkBtn")
-var button_rst = document.getElementById("rstBtn")
+var button_car = document.getElementById("carBtn");
+var button_cyl = document.getElementById("cylBtn");
+var button_sph = document.getElementById("sphBtn");
+var button_art = document.getElementById("artBtn");
+var button_fwd = document.getElementById("fwkBtn");
+var button_bwk = document.getElementById("bwkBtn");
+var button_rst = document.getElementById("rstBtn");
 
 // Field elements
 var input_l1 = document.getElementById("l1");
@@ -77,6 +83,10 @@ var meshesArray = [];
 
 // === Event listeners ===
 
+// Add event listner to div toggle
+toggle_input.addEventListener("click", function () { toggleDiv("info-input") }, false);
+toggle_calculation.addEventListener("click", function () { toggleDiv("info-calculation") }, false);
+
 // Add event listener to buttons
 button_car.addEventListener("click", function () { robotChange(this.value) });
 button_cyl.addEventListener("click", function () { robotChange(this.value) });
@@ -130,6 +140,16 @@ window.onkeypress = function (e) {
 
 
 // === Functions ===
+
+// Show/hide div
+function toggleDiv(id) {
+    var x = document.getElementById(id);
+    if (x.style.display === "none") {
+        x.style.display = "block";
+    } else {
+        x.style.display = "none";
+    }
+}
 
 // Get input values
 function getInputValues() {
