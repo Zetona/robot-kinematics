@@ -330,6 +330,14 @@ function forwardKinematic(event, renderOnly = false) {
     // get user input
     var input = getInputValues();
 
+    // validate
+    if (input.l1 < 0 || input.l2 < 0 || input.l3 < 0){
+        changeFieldBG(0, "pink");
+        return;
+    } else {
+        changeFieldBG(0, null);
+    }
+
     // calculate local link matrices
     linkM = calcLinkM(input.l1, input.l2, input.l3);
 
