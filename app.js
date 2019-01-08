@@ -255,8 +255,8 @@ function round(num, places = 10) {
 }
 
 // Round array
-function roundArray(A) {
-    return Array.from(A, x => round(x));
+function roundArray(A, places = 10) {
+    return Array.from(A, x => round(x, places));
 }
 
 // Convert transformation matrix to euler angle
@@ -387,7 +387,7 @@ function forwardKinematic(event, renderOnly = false) {
 
     // show coordinate to user
     if (!renderOnly) {
-        var coord = roundArray(link3p);
+        var coord = roundArray(link3p, 4);
         input.x = coord[0];
         input.y = coord[1];
         input.z = coord[2];
@@ -422,9 +422,9 @@ function backwardKinematic() {
         }
 
         // set value in input field
-        input_l1.value = l1;
-        input_l2.value = l2;
-        input_l3.value = l3;
+        input_l1.value = round(l1, 4);
+        input_l2.value = round(l2, 4);
+        input_l3.value = round(l3, 4);
     } else if (robotType == RobotType.cylindrical) {
         // calculate joint angle / link length
         var t1 = -Math.atan2(input.z, input.x);
@@ -438,9 +438,9 @@ function backwardKinematic() {
         }
 
         // set value in input field
-        input_t1.value = toDegrees(t1);
-        input_l2.value = l2;
-        input_l3.value = l3;
+        input_t1.value = round(toDegrees(t1), 4);
+        input_l2.value = round(l2, 4);
+        input_l3.value = round(l3, 4);
     } else if (robotType == RobotType.spherical) {
         // calculate joint angle / link length
         var t1 = -Math.atan2(input.z, input.x);
@@ -454,9 +454,9 @@ function backwardKinematic() {
         }
 
         // set value in input field
-        input_t1.value = toDegrees(t1);
-        input_t2.value = toDegrees(t2);
-        input_l3.value = l3;
+        input_t1.value = round(toDegrees(t1), 4);
+        input_t2.value = round(toDegrees(t2), 4);
+        input_l3.value = round(l3, 4);
     } else if (robotType == RobotType.articulated) {
         // calculate joint angle / link length
         var r1 = Math.sqrt(Math.pow(input.x, 2) + Math.pow(input.z, 2));
@@ -476,9 +476,9 @@ function backwardKinematic() {
         }
 
         // set value in input field
-        input_t1.value = toDegrees(t1);
-        input_t2.value = toDegrees(t2);
-        input_t3.value = toDegrees(t3);
+        input_t1.value = round(toDegrees(t1), 4);
+        input_t2.value = round(toDegrees(t2), 4);
+        input_t3.value = round(toDegrees(t3), 4);
     }
 
     // use forward kinematic function to calculate 
