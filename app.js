@@ -27,7 +27,6 @@ slider_y = document.getElementById("ySlider");
 slider_z = document.getElementById("zSlider");
 sliders = [slider_l1, slider_l2, slider_l3, slider_t1, slider_t2, slider_t3, slider_x, slider_y, slider_z];
 
-
 // Add event listener to fields
 input_fields.forEach(function (input) {
     input.onchange = function () {
@@ -39,7 +38,7 @@ input_fields.forEach(function (input) {
 sliders.forEach(function (slider, i) {
     slider.oninput = function () {
         input_fields[i].value = this.value;
-        if (i<6){
+        if (i < 6) {
             forwardKinematic();
         }
         else {
@@ -47,6 +46,27 @@ sliders.forEach(function (slider, i) {
         }
     };
 });
+
+// Add event listener to keyboard controls
+window.onkeypress = function (e) {
+    var key = e.keyCode ? e.keyCode : e.which;
+    if (key == 68 || key == 100) { // key "d"
+        input_x.value = parseFloat(input_x.value) + 0.2;
+    } else if (key == 65 || key == 97) { // key "a"
+        input_x.value = parseFloat(input_x.value) - 0.2;
+    } else if (key == 87 || key == 119) { // key "w"
+        input_y.value = parseFloat(input_y.value) + 0.2;
+    } else if (key == 83 || key == 115) { // key "s"
+        input_y.value = parseFloat(input_y.value) - 0.2;
+    } else if (key == 81 || key == 113) { // key "q"
+        input_z.value = parseFloat(input_z.value) + 0.2;
+    } else if (key == 69 || key == 101) { // key "e"
+        input_z.value = parseFloat(input_z.value) - 0.2;
+    } else {
+        return;
+    }
+    backwardKinematic();
+}
 
 function getInputValues() {
     var inputValues = {
@@ -140,7 +160,6 @@ Math.degrees = function (radians) {
 
 // Convert transformation matrix to euler angle
 function toEuler(TM) {
-    console.log(TM);
     var alpha = 0;
     var beta = 0;
     var gamma = 0;
@@ -306,7 +325,7 @@ plane.rotation.x = Math.PI / 2;
 scene.add(plane);
 
 // create geometry for axes
-axes = new THREE.AxisHelper(25);
+axes = new THREE.AxesHelper(25);
 scene.add(axes);
 
 // create geometry for links
@@ -343,9 +362,9 @@ var createMeshes = function (linkM) {
     var pivotPoint3 = new THREE.Object3D();
 
     // configure euler order 
-    joint1.eulerOrder = 'ZYX';
-    joint2.eulerOrder = 'ZYX';
-    joint3.eulerOrder = 'ZYX';
+    joint1.rotation.order = 'ZYX';
+    joint2.rotation.order = 'ZYX';
+    joint3.rotation.order = 'ZYX';
 
     // define rotation pivot of each link 
     joint1.add(pivotPoint1);
@@ -403,3 +422,4 @@ var gl_main = function () {
 }
 
 gl_main();
+resetField();
