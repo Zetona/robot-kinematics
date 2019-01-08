@@ -297,13 +297,15 @@ function calcBaseTM(t1, t2, t3) {
         var C1 = [1, 0, 0, 0, 1, 0, 0, 0, 1]
         var C2 = [1, 0, 0, 0, 1, 0, 0, 0, 1]
         var C3 = [1, 0, 0, 0, 1, 0, 0, 0, 1]
-    }
-    else if (robotType == RobotType.cylindrical) {
+    } else if (robotType == RobotType.cylindrical) {
         var C1 = [Math.cos(t1), 0, Math.sin(t1), 0, 1, 0, -Math.sin(t1), 0, Math.cos(t1)]
         var C2 = [1, 0, 0, 0, 1, 0, 0, 0, 1]
         var C3 = [1, 0, 0, 0, 1, 0, 0, 0, 1]
-    }
-    else if (robotType == RobotType.articulated) {
+    } else if (robotType == RobotType.spherical) {
+        var C1 = [Math.cos(t1), 0, Math.sin(t1), 0, 1, 0, -Math.sin(t1), 0, Math.cos(t1)]
+        var C2 = [Math.cos(t2), -Math.sin(t2), 0, Math.sin(t2), Math.cos(t2), 0, 0, 0, 1]
+        var C3 = [1, 0, 0, 0, 1, 0, 0, 0, 1]
+    } else if (robotType == RobotType.articulated) {
         var C1 = [Math.cos(t1), 0, Math.sin(t1), 0, 1, 0, -Math.sin(t1), 0, Math.cos(t1)]
         var C2 = [Math.cos(t2), -Math.sin(t2), 0, Math.sin(t2), Math.cos(t2), 0, 0, 0, 1]
         var C3 = [Math.cos(t3), -Math.sin(t3), 0, Math.sin(t3), Math.cos(t3), 0, 0, 0, 1]
@@ -326,7 +328,11 @@ function calcLinkM(l1, l2, l3) {
         var LM1 = [0, l1, 0];
         var LM2 = [0, l2, 0];
         var LM3 = [l3, 0, 0];
-    } else if (robotType == RobotType.articulated) {
+    } else if (robotType == RobotType.spherical) {
+        var LM1 = [0, l1, 0];
+        var LM2 = [l2, 0, 0];
+        var LM3 = [l3, 0, 0];
+    }else if (robotType == RobotType.articulated) {
         var LM1 = [0, l1, 0];
         var LM2 = [l2, 0, 0];
         var LM3 = [l3, 0, 0];
@@ -414,6 +420,22 @@ function backwardKinematic() {
         input_t1.value = toDegrees(t1);
         input_l2.value = l2;
         input_l3.value = l3;
+    } else if (robotType == RobotType.spherical) {
+        // calculate joint angle / link length
+        var t1 = -Math.atan2(input.z, input.x);
+        var t2 = Math.atan2(input.y - input.l1, Math.sqrt(Math.pow(input.x, 2) + Math.pow(input.z, 2)));
+        var l3 = Math.sqrt(Math.pow(input.x, 2) + Math.pow(input.y - input.l1, 2) + Math.pow(input.z, 2)) - input.l2;
+
+        // validate if joint angle / link length is valid
+        if (isNaN(t1) || isNaN(t2) || l3 < 0) {
+            changeFieldBG(1, "pink");
+            return 0;
+        }
+
+        // set value in input field
+        input_t1.value = toDegrees(t1);
+        input_t2.value = toDegrees(t2);
+        input_l3.value = l3;
     } else if (robotType == RobotType.articulated) {
         // calculate joint angle / link length
         var r1 = Math.sqrt(Math.pow(input.x, 2) + Math.pow(input.z, 2));
@@ -497,8 +519,10 @@ function createMeshes(linkM) {
         pivotPoint2.rotation.x = Math.PI / 2;
     } else if (robotType == RobotType.cylindrical) {
         pivotPoint3.rotation.z = -Math.PI / 2;
-    }
-    else if (robotType == RobotType.articulated) {
+    } else if (robotType == RobotType.spherical) {
+        pivotPoint2.rotation.z = -Math.PI / 2;
+        pivotPoint3.rotation.z = -Math.PI / 2;
+    } else if (robotType == RobotType.articulated) {
         pivotPoint2.rotation.z = -Math.PI / 2;
         pivotPoint3.rotation.z = -Math.PI / 2;
     }
