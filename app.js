@@ -42,12 +42,12 @@ var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.z = 20;
 var renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setSize(window.innerWidth - 5, window.innerHeight - 5);
 document.body.appendChild(renderer.domElement);
 
 // update renderer and camera when browser is resized
 window.addEventListener("resize", function () {
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(window.innerWidth - 5, window.innerHeight - 5);
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
 })
@@ -332,7 +332,7 @@ function calcLinkM(l1, l2, l3) {
         var LM1 = [0, l1, 0];
         var LM2 = [l2, 0, 0];
         var LM3 = [l3, 0, 0];
-    }else if (robotType == RobotType.articulated) {
+    } else if (robotType == RobotType.articulated) {
         var LM1 = [0, l1, 0];
         var LM2 = [l2, 0, 0];
         var LM3 = [l3, 0, 0];
@@ -376,7 +376,8 @@ function forwardKinematic(event, renderOnly = false) {
     matchSlider();
     changeFieldBG(null, null);
 
-    // TODO: show calculation result
+    // show calculation result
+
 
     // update scene
     update(linkM, baseTM, linkP);
