@@ -78,10 +78,10 @@ var meshesArray = [];
 // === Event listeners ===
 
 // Add event listener to buttons
-button_car.addEventListener("click", function(){robotChange(this.value)});
-button_cyl.addEventListener("click", function(){robotChange(this.value)});
-button_sph.addEventListener("click", function(){robotChange(this.value)});
-button_art.addEventListener("click", function(){robotChange(this.value)});
+button_car.addEventListener("click", function () { robotChange(this.value) });
+button_cyl.addEventListener("click", function () { robotChange(this.value) });
+button_sph.addEventListener("click", function () { robotChange(this.value) });
+button_art.addEventListener("click", function () { robotChange(this.value) });
 button_fwd.addEventListener("click", forwardKinematic);
 button_bwk.addEventListener("click", backwardKinematic);
 button_rst.addEventListener("click", resetField);
@@ -298,6 +298,11 @@ function calcBaseTM(t1, t2, t3) {
         var C2 = [1, 0, 0, 0, 1, 0, 0, 0, 1]
         var C3 = [1, 0, 0, 0, 1, 0, 0, 0, 1]
     }
+    else if (robotType == RobotType.cylindrical) {
+        var C1 = [Math.cos(t1), 0, Math.sin(t1), 0, 1, 0, -Math.sin(t1), 0, Math.cos(t1)]
+        var C2 = [1, 0, 0, 0, 1, 0, 0, 0, 1]
+        var C3 = [1, 0, 0, 0, 1, 0, 0, 0, 1]
+    }
     else if (robotType == RobotType.articulated) {
         var C1 = [Math.cos(t1), 0, Math.sin(t1), 0, 1, 0, -Math.sin(t1), 0, Math.cos(t1)]
         var C2 = [Math.cos(t2), -Math.sin(t2), 0, Math.sin(t2), Math.cos(t2), 0, 0, 0, 1]
@@ -317,6 +322,10 @@ function calcLinkM(l1, l2, l3) {
         var LM1 = [l1, 0, 0];
         var LM2 = [0, 0, l2];
         var LM3 = [0, l3, 0];
+    } else if (robotType == RobotType.cylindrical) {
+        var LM1 = [0, l1, 0];
+        var LM2 = [0, l2, 0];
+        var LM3 = [l3, 0, 0];
     } else if (robotType == RobotType.articulated) {
         var LM1 = [0, l1, 0];
         var LM2 = [l2, 0, 0];
@@ -331,7 +340,7 @@ function forwardKinematic(event, renderOnly = false) {
     var input = getInputValues();
 
     // validate
-    if (input.l1 < 0 || input.l2 < 0 || input.l3 < 0){
+    if (input.l1 < 0 || input.l2 < 0 || input.l3 < 0) {
         changeFieldBG(0, "pink");
         return;
     } else {
@@ -389,8 +398,23 @@ function backwardKinematic() {
         input_l1.value = l1;
         input_l2.value = l2;
         input_l3.value = l3;
-    }
-    else if (robotType == RobotType.articulated) {
+    } else if (robotType == RobotType.cylindrical) {
+        // calculate joint angle / link length
+        var t1 = -Math.atan2(input.z, input.x);
+        var l2 = input.y - input.l1;
+        var l3 = Math.sqrt(Math.pow(input.x, 2) + Math.pow(input.z, 2));
+
+        // validate if joint angle / link length is valid
+        if (isNaN(t1) || l2 < 0 || l3 < 0) {
+            changeFieldBG(1, "pink");
+            return 0;
+        }
+
+        // set value in input field
+        input_t1.value = toDegrees(t1);
+        input_l2.value = l2;
+        input_l3.value = l3;
+    } else if (robotType == RobotType.articulated) {
         // calculate joint angle / link length
         var r1 = Math.sqrt(Math.pow(input.x, 2) + Math.pow(input.z, 2));
         var r2 = input.y - input.l1;
@@ -471,6 +495,8 @@ function createMeshes(linkM) {
     if (robotType == RobotType.cartesian) {
         pivotPoint1.rotation.z = -Math.PI / 2;
         pivotPoint2.rotation.x = Math.PI / 2;
+    } else if (robotType == RobotType.cylindrical) {
+        pivotPoint3.rotation.z = -Math.PI / 2;
     }
     else if (robotType == RobotType.articulated) {
         pivotPoint2.rotation.z = -Math.PI / 2;
