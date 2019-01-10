@@ -16,7 +16,7 @@ var button_cyl = document.getElementById("cylBtn");
 var button_sph = document.getElementById("sphBtn");
 var button_art = document.getElementById("artBtn");
 var button_fwd = document.getElementById("fwkBtn");
-var button_bwk = document.getElementById("bwkBtn");
+var button_inv = document.getElementById("invBtn");
 var button_rst = document.getElementById("rstBtn");
 
 // Field elements
@@ -93,7 +93,7 @@ button_cyl.addEventListener("click", function () { robotChange(this.value) });
 button_sph.addEventListener("click", function () { robotChange(this.value) });
 button_art.addEventListener("click", function () { robotChange(this.value) });
 button_fwd.addEventListener("click", forwardKinematic);
-button_bwk.addEventListener("click", backwardKinematic);
+button_inv.addEventListener("click", inverseKinematic);
 button_rst.addEventListener("click", resetField);
 
 // Add event listener to fields
@@ -111,7 +111,7 @@ sliders.forEach(function (slider, i) {
             forwardKinematic();
         }
         else {
-            backwardKinematic();
+            inverseKinematic();
         }
     };
 });
@@ -134,7 +134,7 @@ window.onkeypress = function (e) {
     } else {
         return;
     }
-    backwardKinematic();
+    inverseKinematic();
 }
 
 
@@ -499,8 +499,8 @@ function forwardKinematic(event, renderOnly = false) {
     document.getElementById("E3-g").innerHTML = round(eulerM[2][2], 2);
 }
 
-// Backward Kinematic
-function backwardKinematic() {
+// Inverse Kinematic
+function inverseKinematic() {
     // get user input
     var input = getInputValues();
 

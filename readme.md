@@ -1,5 +1,5 @@
 ## About this project ##
-A javascript implementation of robotic manipulator's forward and backward kinematic simulation.
+A javascript implementation of robotic manipulator's forward and inverse kinematic simulation.
 Four types of 3-DOF robot are implemented: Cartesian, Cylindrical, Spherical, Articulated.
 
 <img src="https://imgur.com/5CYxZIM.png" width=800>
@@ -15,14 +15,14 @@ Four types of 3-DOF robot are implemented: Cartesian, Cylindrical, Spherical, Ar
 
 ### Manual input ###
 * Use text field for setting link length, joint angle, or end-tip position
-* Click either forward kinematic or backward kinematic button to perform calculation
+* Click either forward kinematic or inverse kinematic button to perform calculation
 
 ### Slider control ###
 * Use input sliders for controlling link length, joint angle, or end-tip position
-* Forward kinematic or backward kinematic is automatically performed based on the slider being controlled
+* Forward kinematic or inverse kinematic is automatically performed based on the slider being controlled
 
 ### Keyboard control ###
-* Use keyboard control to move end tip position and perform backward kinematic
+* Use keyboard control to move end tip position and perform inverse kinematic
     * D - Move along positive x-axis
     * A - Move along negative x-axis
     * W - Move along positive y-axis
