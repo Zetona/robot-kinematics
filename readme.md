@@ -1,5 +1,5 @@
 ## About this project ##
-A javascript implementation of robotic manipulator's forward and inverse kinematic simulation.
+A JavaScript implementation of robotic manipulator's forward and inverse kinematic simulation.
 Four types of 3-DOF robot are implemented: Cartesian, Cylindrical, Spherical, Articulated.
 
 <img src="https://imgur.com/5CYxZIM.png" width=800>
